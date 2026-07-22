@@ -1,4 +1,4 @@
-const obtenerLogrosComb = require('./_lib/steam')
+import obtenerLogrosComb from './_lib/steam'
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {

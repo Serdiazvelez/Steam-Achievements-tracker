@@ -1,4 +1,4 @@
-import pool from './_lib/db.js'
+import pool from './_lib/db'
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
