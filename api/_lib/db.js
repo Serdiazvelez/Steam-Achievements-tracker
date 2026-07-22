@@ -1,6 +1,6 @@
 import pg from 'pg'
 
-const { Pool } = require('pg')
+const { Pool } = ('pg')
 
 const pool = global.pool || new Pool({
     connectionString: process.env.DATABASE_URL,
