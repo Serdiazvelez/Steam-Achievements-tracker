@@ -26,6 +26,10 @@ export default async function handler(req, res) {
 
         const achcombined = await obtenerLogrosComb(steamid, appid)
 
+        const total = achcombined.length
+        
+        const completados = achcombined.filter(a => a.achieved).length
+
         const logroSeleccionado = achcombined.find(
             a => a.apiname === achievement_apiname
         )
