@@ -1,6 +1,6 @@
 # Bombo Widgets
 
-##Steam achievements tracker
+## Steam achievements tracker
 
 Este proyecto es una pagina web la cual genera un link para colocar en OBS, y poder colocar un tracker de logros de algun Juego que quieras completar.
 
