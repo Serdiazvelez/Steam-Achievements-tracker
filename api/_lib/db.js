@@ -1,8 +1,16 @@
+import pg from 'pg'
+
 const { Pool } = require('pg')
 
-const pool = new Pool({
+const pool = global.pool || new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
+    ssl: {
+        rejectUnauthorized: false
+    }
 })
 
-module.exports = pool
+if (process.env.NODE_ENV !== 'production'){
+    global.pool = pool
+}
+
+export default pool
