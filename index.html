@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+
+
+
+<html>
+    <head>
+        <title>Bombo Widgets</title>
+        <link rel ="stylesheet" href="style.css">
+    </head>
+    <body>
+        <main>
+            <div id="app-container">
+                <h1>Bombo Widgets</h1>
+                <form id="formulario">
+                    <label for="usersteamid">SteamId</label>
+                    <input type="text" id="usersteamid" name="usersteamid" required>
+                    <button class="submit">Enviar</button>
+                </form>
+            </div>
+            <div id="preview-section">
+
+            </div>
+            <div id="response"></div>
+            <script>
+                const formulario = document.getElementById('formulario');
+
+                formulario.addEventListener('submit', function(e){
+
+                    e.preventDefault();
+                    
+                    //Captura valor del input
+                    const STEAM_ID = document.getElementById('usersteamid').value;
+
+                    //Envia a JS
+                    fetch('/api/submit',{ 
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({usersteamid: STEAM_ID})
+                    })
+                    
+                    .then(respuesta =>{
+                        if (respuesta.ok) {
+                            console.log ('Datos enviados correctamente');
+                            return respuesta.json();
+
+                        }
+                        throw new Error('Error en la peticion de usuario');
+                    })
+                    .then(data => {
+                       console.log('Respuesta del servidor', data);
+                       formulario.style.display = 'none'
+
+                       const searchgame = document.createElement('input')
+                       searchgame.type = "text" 
+                       searchgame.id = "searchgame"
+                       document.getElementById('app-container').appendChild(searchgame)
+
+                       const selectgame = document.createElement('ul')
+                       selectgame.id = "selectgame"
+
+                       //Inicia funcion Lista
+                       function renderizarLista(array, contenedor){
+                        contenedor.innerHTML = ''
+                        for (const item of array){
+            
+                            const optlist = document.createElement('li')
+                            optlist.id = "optlist"
+                            optlist.addEventListener('click', function(){
+                            selectgame.style.display = 'none'
+                            searchgame.style.display = 'none'
+
+                            const selegdiv = document.createElement('div')
+                            selegdiv.id ="selegdiv"
+                            selegdiv.textContent = item.name 
+                            document.getElementById('app-container').appendChild(selegdiv)
+
+                            const selectedgame = document.createElement('span')
+                            selectedgame.innerHTML = '&times;'
+                            selectedgame.addEventListener('click', function (){
+                                selectgame.style.display = 'block'
+                                searchgame.style.display = 'block'
+                                selegdiv.remove()
+
+                                const listaLogros = document.getElementById('lista-logros')
+                                if (listaLogros) listaLogros.remove()
+
+                                const inputLogros = document.getElementById('iput-logros')
+                                if (inputLogros) inputLogros.remove()
+
+                                const botonLogros = document.getElementById('boton-no-completados')
+                                if (botonLogros) botonLogros.remove()
+
+                                const achdivSelec = document.getElementById('achievement-selected')
+                                if (achdivSelec) achdivSelec.remove()
+
+                                const previewAnterior = document.getElementById('widget-preview')
+                                if (previewAnterior) previewAnterior.remove()
+
+                                const widgeturlAnterior = document.getElementById('widget-url')
+                                if (widgeturlAnterior) widgeturlAnterior.remove()
+
+                                const btncopiarAnterior = document.getElementById('btnCopiar')
+                                if (btncopiarAnterior) btncopiarAnterior.remove()
+
+                            })
+                            selegdiv.appendChild(selectedgame)
+
+                            const listaAnterior = document.getElementById('lista-logros')
+                            if(listaAnterior) {
+                                listaAnterior.remove()
+                            }
+                            const inputAnterior = document.getElementById('input-logros')
+                            if(inputAnterior) {
+                                inputAnterior.remove()
+                            }
+
+                            fetch('/api/achievement', {
+                                method: 'POST',
+                                headers: {'Content-Type':'application/json'},
+                                body: JSON.stringify({usersteamid: STEAM_ID, appid: item.appid})
+                            })
+
+                            .then(respuesta =>{
+                                if (respuesta.ok) return respuesta.json()
+                                throw new Error('Error al obtener logros')
+                            })
+                            .then(data =>{
+                                const searchach = document.createElement('input') 
+                                searchach.id = 'input-logros'
+                                searchach.type = "text"
+                                searchach.placeholder = "Buscar logro..."
+                                document.getElementById('app-container').appendChild(searchach)
+
+                                const selectach = document.createElement('ul')
+                                selectach.id = 'lista-logros'
+
+                                const nocomplfltr = document.createElement('button')
+                                nocomplfltr.id = 'boton-no-completados'
+                                nocomplfltr.textContent = 'Mostrar solo logros no completados'
+                                document.getElementById('app-container').appendChild(nocomplfltr)
+
+                                const achcombined = data.achcombined
+                                const total = achcombined.length
+                                const completados = achcombined.filter(a => a.achieved === 1).length
+                                
+                                // Capturar los datos del juego para usarlos en renderizarLogros
+                                const gameAppid = item.appid
+                                const gameName = item.name
+                                const gameApiname = item.apiname
+
+                                renderizarLogros(data.achcombined, selectach, searchach, selectgame, searchgame, gameApiname, gameAppid, gameName)
+                                document.getElementById('app-container').appendChild(selectach)
+
+                                let filtroActivo = false
+
+                                searchach.addEventListener('input', function (){
+                                    selectach.innerHTML = ''
+                                    aplicarFiltro()
+                                })
+
+                                nocomplfltr.addEventListener('click', function(){
+                                    filtroActivo = !filtroActivo
+                                    selectach.innerHTML = ''
+                                    nocomplfltr.classList.toggle('filtro-activo')
+                                    aplicarFiltro()
+                                })
+
+                                function aplicarFiltro() {
+                                    let resultado = achcombined
+                                    if (filtroActivo) {
+                                        resultado = resultado.filter(achlist => achlist.achieved === 0)
+                                    }
+                                    resultado = resultado.filter(achlist => 
+                                        achlist.name.toLowerCase().includes(searchach.value.toLowerCase()))
+                                    renderizarLogros(resultado, selectach, searchach, selectgame, searchgame, gameApiname, gameAppid, gameName)
+                                }
+                            })
+
+                            .catch(error => console.error('Error', error))
+                        })
+                        
+                        optlist.textContent = item.name 
+                        optlist.value = item.appid
+                        const gimage = document.createElement('img')
+                        gimage.id = "gimage"
+                        gimage.src = `https://media.steampowered.com/steamcommunity/public/images/apps/${item.appid}/${item.img_icon_url}.jpg`
+                        selectgame.appendChild(optlist)
+                        optlist.appendChild(gimage)
+                    }
+                }
+                       //Termina funcion lista.
+
+                       renderizarLista(data.steamgamesinf, selectgame)
+                       document.getElementById('app-container').appendChild(selectgame);
+
+                       searchgame.addEventListener('input', function () {
+                        selectgame.innerHTML = ''
+                        const fltrlist = data.steamgamesinf.filter(function(gamelist){
+                            return gamelist.name.toLowerCase().includes(searchgame.value.toLowerCase())
+                        })
+                        renderizarLista(fltrlist, selectgame)
+                    })
+
+                    //Inicia funcion logros
+                    function renderizarLogros(array, contenedor, searchach, selectgame, searchgame, apiname, appid, gamename) {
+                        for (const item of array) {
+
+                            const achoptlist = document.createElement('li')
+                            const achname = document.createElement('span')
+                            achname.className = 'ach-name'
+                            achname.textContent = item.name
+                            
+                            const achdesc = document.createElement('span')
+                            achdesc.className = 'ach-description'
+                            achdesc.textContent = item.description
+
+                            achoptlist.appendChild(achname)
+                            achoptlist.appendChild(achdesc)
+
+                            const achinfwrapper = document.createElement('div')
+                            achinfwrapper.className = 'ach-text'
+                            achinfwrapper.appendChild(achname)
+                            achinfwrapper.appendChild(achdesc)
+
+                            achoptlist.appendChild(achinfwrapper)
+
+                            achoptlist.value = item.achieved
+
+                            achoptlist.addEventListener('click', function(){
+                                contenedor.style.display = 'none'
+                                searchach.style.display = 'none'
+                                
+                                console.log('Datos antes de enviar:', {usersteamid: STEAM_ID, appid:appid, name:gamename, apiname: item.apiname})
+                                console.log('Valores individuales - appid:', appid, 'gamename:', gamename, 'apiname (logro):', item.apiname)
+                                
+                                fetch('/api/save-widget',{
+                                    method: 'POST',
+                                    headers: {'Content-Type': 'application/json'},
+                                    body: JSON.stringify({usersteamid: STEAM_ID, appid:appid, name:gamename, apiname: item.apiname})
+                                })
+
+                                const achdiv = document.createElement('div')
+                                achdiv.id = 'achievement-selected'
+                                achdiv.textContent = item.name
+                                document.getElementById('app-container').appendChild(achdiv)
+
+                                const selectedach = document.createElement('span')
+                                selectedach.innerHTML = '&times;'
+                                selectedach.addEventListener('click', function(){
+                                    contenedor.style.display = 'block'
+                                    searchach.style.display = 'block'
+                                    achdiv.remove()
+                                })
+                                achdiv.appendChild(selectedach)
+
+
+                                let preview = document.getElementById('widget-preview')
+
+                                if (!preview){
+                                const preview = document.createElement('iframe')
+                                preview.id = 'widget-preview'
+                                preview.src = `/widget/${STEAM_ID}`
+                                document.getElementById('preview-section').appendChild(preview)
+
+                                const urlWidget = `${window.location.origin}/widget/${STEAM_ID}`
+
+                                const urlInput = document.createElement('input')
+                                urlInput.id = 'widget-url'
+                                urlInput.value = urlWidget
+                                urlInput.readOnly = true
+                                document.getElementById('preview-section').appendChild(urlInput)
+
+                                const btnCopiar = document.createElement('button')
+                                btnCopiar.id = 'btn-copiar'
+                                btnCopiar.textContent = 'Copiar URL'
+                                btnCopiar.addEventListener('click', function(){
+                                    navigator.clipboard.writeText(urlWidget)
+
+                                    const copymsg = document.createElement('span')
+                                    copymsg.id = 'copy-msg'
+                                    copymsg.textContent = 'URL Copiado!'
+                                    document.getElementById('preview-section').appendChild(copymsg)
+
+                                    setTimeout(function(){
+                                        copymsg.remove()
+                                    }, 2000)
+                                })
+                                document.getElementById('preview-section').appendChild(btnCopiar)
+                                
+                                } else {
+                                    preview.contentWindow.postMessage('actualizar', '*')
+                                }    
+
+                            })
+
+                            const icon1 = document.createElement('img')
+                            icon1.src = item.icon
+                            const icon0 = document.createElement('img')
+                            icon0.src = item.icongrey
+
+                            contenedor.appendChild(achoptlist)
+
+                            if (item.achieved === 1) {
+                                achoptlist.appendChild(icon1)
+                            } else {
+                                achoptlist.appendChild(icon0)
+                            }
+                        }
+                    }
+
+
+                    //Termina funcion logros
+                    
+                })
+                    .catch(error => {
+                        console.error('Error', error);
+                        alert('Hubo un problema al enviar los datos.');
+                    });
+                });
+            </script>
+        </main>
+    </body>
+</html>

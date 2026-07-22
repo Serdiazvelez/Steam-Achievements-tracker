@@ -1,0 +1,91 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="/widget-style.css">
+    </head>
+        <body>
+            <div id="widget-container">
+                <div id="widget-banner">
+                    <div id="banner-image"></div>
+                    <h2 id="game-name"></h2>
+                    <p id="progress-text"></p>
+                    <div id="progress-bar"><div id ="progress-fill"></div></div>
+                    <p id="porcentaje"></p>
+                </div>
+                <div id="widget-content">
+                    <p id="acomp">Logro a completar:</p>
+                    <div id ="achievement-info">
+                        <img id="achievement-icon">
+                        <div>
+                            <p id="achievement-name"></p>
+                            <p id="achievement-description"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <script>
+
+            const urlpart = window.location.pathname.split('/')
+
+            const steamid = urlpart [2]
+
+            function actualizarWidget(){
+                fetch(`/api/widget-data/${steamid}`)
+                .then(respuesta => respuesta.json())
+                .then(data =>{
+                
+                    const completados = data.completados
+
+                    const total = data.total
+
+                    const porcentaje = (completados / total) * 100 
+
+                    const appid = data.appid
+
+                    const gamename = data.gamename
+                    gamename.id = 'gamename'
+                    
+                    const achievement = data.logroSeleccionado
+
+                    const achdescription = achievement.description
+                    
+                    const achdesc = document.getElementById("achievement-description")
+                    achdesc.textContent = achdescription
+
+                    const widgetBanner = document.getElementById('widget-banner')
+                    document.getElementById('banner-image').style.backgroundImage = `url(https://cdn.akamai.steamstatic.com/steam/apps/${appid}/header.jpg)`
+
+                    const achicon = document.getElementById("achievement-icon")
+                    achicon.src = achievement.achieved === 1 ? achievement.icon : achievement.icongrey
+
+                    
+                    const gamenameh2 = document.getElementById("game-name");
+                    gamenameh2.textContent = gamename
+
+                    const progressfill = document.getElementById("progress-fill");
+                    progressfill.style.width = `${porcentaje}%`
+
+                    
+                    const progresstext = document.getElementById('progress-text')
+                    progresstext.textContent = `${completados}/${total}`
+
+                    const porcentajetext = document.getElementById('porcentaje')
+                    porcentajetext.textContent = `${porcentaje.toFixed(2)}%`
+                
+                    const achname = document.getElementById("achievement-name")
+                    achname.textContent = achievement.name
+                })
+                
+            }
+
+            window.addEventListener('message', function(event){
+                if (event.data === 'actualizar'){
+                    actualizarWidget()
+                }
+            })
+
+            actualizarWidget()
+            setInterval(actualizarWidget, 60000)
+
+            </script>
+        </body>
+</html>
