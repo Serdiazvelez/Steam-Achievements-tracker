@@ -114,7 +114,7 @@
                                 inputAnterior.remove()
                             }
 
-                            fetch('/api/achievement', {
+                            fetch('/api/achievements', {
                                 method: 'POST',
                                 headers: {'Content-Type':'application/json'},
                                 body: JSON.stringify({usersteamid: STEAM_ID, appid: item.appid})
