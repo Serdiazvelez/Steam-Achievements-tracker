@@ -1,45 +1,38 @@
 export default async function handler(req, res) {
-  // Solo aceptar POST
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Método no permitido' });
-  }
-
-  try {
-    // Aquí recibirás los datos del formulario
-    const { STEAM_ID } = req.body;
-    console.log('Body recibido:', req.body)
-    console.log('Steam ID:', STEAM_ID)
-    if (!STEAM_ID) {
-      return res.status(400).json({ error: 'SteamId requerido' });
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Método no permitido' })
     }
 
-    // Aquí irá tu lógica:
-    // - Validar SteamId
-    // - Llamar a la API de Steam
-    const url1 = (`https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=${STEAM_API_KEY}&steamid=${STEAM_ID}&include_appinfo=true&format=json`)
-    console.log('URL1 SteamGames', url1)
+    try {
+        const { usersteamid } = req.body
 
-    const response = await fetch(url1);
+        if (!usersteamid) {
+            return res.status(400).json({ error: 'SteamId requerido' })
+        }
 
-    if (!response.ok){
-      console.log('ERROR HTTP:', response.status);
-      throw new Error('Error al consultar la API de Steam');
+        const apiKey = process.env.STEAM_API_KEY
+        if (!apiKey) {
+            return res.status(500).json({ error: 'Falta STEAM_API_KEY en las variables de entorno' })
+        }
+
+        const steamUrl = `https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=${apiKey}&steamid=${usersteamid}&include_appinfo=true&format=json`
+
+        const steamResponse = await fetch(steamUrl)
+        const steamData = await steamResponse.json()
+
+        const steamgamesinf = steamData.response.games.map(gameinf => ({
+            appid: gameinf.appid,
+            name: gameinf.name,
+            img_icon_url: gameinf.img_icon_url
+        }))
+
+        return res.status(200).json({
+            mensaje: `Datos obtenidos para ${usersteamid}`,
+            steamgamesinf,
+            timestamp: new Date().toISOString()
+        })
+    } catch (e) {
+        console.error('Error en /api/submit:', e)
+        return res.status(500).json({ error: 'Error interno del servidor' })
     }
-    
-    const data = await response.json();
-    console.log('Respuesta completa de Steam', data);
-    // - Procesar datos
-
-
-    // - Devolver respuesta
-
-    return res.status(200).json({
-      mensaje: `Datos recibidos: ${STEAM_ID}`,
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error('Error:', error);
-    return res.status(500).json({ error: 'Error interno del servidor' });
-  }
 }
