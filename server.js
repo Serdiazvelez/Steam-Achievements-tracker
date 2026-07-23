@@ -1,12 +1,12 @@
-require('dotenv').config({ path: '.env.local' });
+import dotenv  from 'dotenv'
+dotenv.config({path: '.env.local'}) 
 
-console.log('Conectando a DB:', process.env.DB_NAME)
 
-const {Pool} = require ('pg')
+import {Pool} from 'pg'
 const apiKey = process.env.STEAM_API_KEY;
-const http = require('http');
-const fs = require('fs');
-const url = require('url');
+import http from 'http'
+import fs from 'fs'
+import url from 'url'
 
 const pool = new Pool({
   user: process.env.DB_USER,
@@ -315,7 +315,7 @@ if(pathname === '/widget-style.css'){
 
   //Llamada api de logros
 
-  if (pathname === '/api/achievement' && req.method === 'POST') {
+  if (pathname === '/api/achievements' && req.method === 'POST') {
     let body = ''
     req.on('data', (chunk) => {body += chunk.toString()})
     req.on ('end', async () => {
@@ -330,7 +330,7 @@ if(pathname === '/widget-style.css'){
           timestamp: new Date().toString()
         }))
       }catch(e) {
-        console.error('Error en /api/achievement:', e)
+        console.error('Error en /api/achievements:', e)
         res.writeHead(500, {'Content-Type':'application/json'})
         res.end(JSON.stringify({error: e.message}))
       }

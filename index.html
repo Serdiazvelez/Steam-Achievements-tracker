@@ -84,7 +84,7 @@
                                 const listaLogros = document.getElementById('lista-logros')
                                 if (listaLogros) listaLogros.remove()
 
-                                const inputLogros = document.getElementById('iput-logros')
+                                const inputLogros = document.getElementById('input-logros')
                                 if (inputLogros) inputLogros.remove()
 
                                 const botonLogros = document.getElementById('boton-no-completados')
@@ -99,7 +99,7 @@
                                 const widgeturlAnterior = document.getElementById('widget-url')
                                 if (widgeturlAnterior) widgeturlAnterior.remove()
 
-                                const btncopiarAnterior = document.getElementById('btnCopiar')
+                                const btncopiarAnterior = document.getElementById('btn-copiar')
                                 if (btncopiarAnterior) btncopiarAnterior.remove()
 
                             })
@@ -114,6 +114,12 @@
                                 inputAnterior.remove()
                             }
 
+                            const botonAnterior = document.getElementById('boton-no-completados')
+                            if (botonAnterior) botonAnterior.remove()
+
+                            const achdivAnterior = document.getElementById('achievement-selected')
+                            if (achdivAnterior) achdivAnterior.remove()
+
                             fetch('/api/achievements', {
                                 method: 'POST',
                                 headers: {'Content-Type':'application/json'},
@@ -125,19 +131,21 @@
                                 throw new Error('Error al obtener logros')
                             })
                             .then(data =>{
-                                const searchach = document.createElement('input') 
-                                searchach.id = 'input-logros'
-                                searchach.type = "text"
-                                searchach.placeholder = "Buscar logro..."
-                                document.getElementById('app-container').appendChild(searchach)
-
-                                const selectach = document.createElement('ul')
-                                selectach.id = 'lista-logros'
 
                                 const nocomplfltr = document.createElement('button')
                                 nocomplfltr.id = 'boton-no-completados'
                                 nocomplfltr.textContent = 'Mostrar solo logros no completados'
                                 document.getElementById('app-container').appendChild(nocomplfltr)
+
+                                const searchach = document.createElement('input') 
+                                searchach.setAttribute('autocomplete', 'off')
+                                searchach.id = 'input-logros'
+                                searchach.type = "text"
+                                searchach.placeholder = "Buscar logro..."
+                                document.getElementById('app-container').appendChild(searchach)
+                              
+                                const selectach = document.createElement('ul')
+                                selectach.id = 'lista-logros'
 
                                 const achcombined = data.achcombined
                                 const total = achcombined.length
@@ -152,6 +160,16 @@
                                 document.getElementById('app-container').appendChild(selectach)
 
                                 let filtroActivo = false
+
+                                searchach.addEventListener('focus',function(){
+                                    selectach.style.display = 'block'
+                                })
+
+                                searchach.addEventListener('blur', function(){
+                                    setTimeout(function(){
+                                        selectach.style.display = 'none'
+                                    },200)
+                                })
 
                                 searchach.addEventListener('input', function (){
                                     selectach.innerHTML = ''
